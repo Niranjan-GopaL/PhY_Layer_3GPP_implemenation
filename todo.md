@@ -1,0 +1,5 @@
+- [+] HLS example from GH ( DCT example used in slides )
+- [+] compare solutions
+- [+] look at analys view ( across 3 solutions )
+- [+] look at schedule view ( across 3 solutions )
+- [+] look at resource util view
