@@ -6,7 +6,6 @@
 
 // AXI-Stream data type with 96-bit data and last signal
 // Parameters: <data_width, user_width, id_width, dest_width>
-// Setting user, id, dest to 0 disables them
 typedef ap_axiu<96, 0, 0, 0> axis_data_t;
 typedef hls::stream<axis_data_t> axis_stream_t;
 

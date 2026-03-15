@@ -1,0 +1,8 @@
+Variables	Test case 1	Test case 2	Test case 3	Test case 4	Test case 5	Test case 6	Test case 7	Test case 8	Test case 9	Test case 10	Test case 11	Test case 12	Test case 13	Test case 14
+Qm	2	2	2	2	4	4	4	4	6	6	6	6	8	8
+G	40	672	1360	7200	8400	9840	12888	13120	9258	9336	9582	10800	9496	10000
+
+E=96bits but of the 96 bits, how many are "data" is G
+
+Our block shouldn't just work for 1 "block" of 96bits. Next thing will come we would have to scramble that also.
+Absolutely no scope of parallelism ?

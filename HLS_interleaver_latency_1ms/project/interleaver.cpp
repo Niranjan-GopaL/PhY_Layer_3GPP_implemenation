@@ -10,7 +10,7 @@ void Interleaver(
     #pragma HLS INTERFACE axis port=inData
     #pragma HLS INTERFACE axis port=outData
     #pragma HLS INTERFACE s_axilite port=cnData bundle=control
-    #pragma HLS INTERFACE ap_ctrl_none port=return
+    #pragma HLS INTERFACE ap_ctrl_chain port=return bundle=control
     
     // Extract parameters from control word
     ap_uint<15> E = cnData.range(14, 0);      // Bits [14:0]
@@ -25,10 +25,9 @@ void Interleaver(
     // Calculate number of 96-bit input words needed
     const int bitsPerWord = 96;
     const int bytesPerWord = 12;
-    const int wordsIn = (E + bitsPerWord - 1) / bitsPerWord;
-    const int totalBitsIn = wordsIn * bitsPerWord; // Total bits including padding
+    const int wordsIn = (E + bitsPerWord - 1) / bitsPerWord; 
     
-    // Buffer to hold all input bits (using dynamic sizing based on actual E)
+    // Buffer to hold all input bits
     ap_uint<1> bitBuffer[MAX_ROWS * MAX_COLS];
     #pragma HLS RESOURCE variable=bitBuffer core=RAM_2P_BRAM
     
@@ -62,36 +61,33 @@ void Interleaver(
             reversedWord.range(byte*8 + 7, byte*8) = reversedByte;
         }
         
-        // Pack all 96 bits (now with correct bit ordering) into buffer
-        // But only up to E bits total
-        PACK_BITS: for (int b = 0; b < bitsPerWord; b++) {
+        // Pack all 96 bits into buffer, but only up to E bits
+        for (int b = 0; b < bitsPerWord; b++) {
             #pragma HLS UNROLL
             if (bitPos < E) {
                 bitBuffer[bitPos++] = reversedWord[b];
             } else {
-                // Skip padding bits beyond E
-                bitPos++;
+                bitPos++; // Skip padding
             }
         }
     }
     
-    // Step 2: Interleave - using Algorithm 1 from spec
-    // Initialize outBuffer to zeros first
+    // Step 2: Interleave using Algorithm 1
+    // Initialize outBuffer
     INIT_OUT: for (int i = 0; i < E; i++) {
         #pragma HLS PIPELINE II=1
         outBuffer[i] = 0;
     }
     
-    // Perform interleaving according to Algorithm 1
-    for (int j = 0; j < numCols; j++) {
+    // Perform interleaving
+    INTERLEAVE_COL: for (int j = 0; j < numCols; j++) {
         #pragma HLS PIPELINE II=1
         #pragma HLS LOOP_TRIPCOUNT min=1 max=3280
         
-        for (int i = 0; i < numRows; i++) {
+        INTERLEAVE_ROW: for (int i = 0; i < numRows; i++) {
             #pragma HLS UNROLL
-            // According to Algorithm 1: f[i + j*Qm] = e[i*E/Qm + j]
             int srcIdx = i * numCols + j;
-            int dstIdx = i + j * numRows;  // This matches the formula: i + j*Qm
+            int dstIdx = i + j * numRows;
             
             if (srcIdx < E && dstIdx < E) {
                 outBuffer[dstIdx] = bitBuffer[srcIdx];
@@ -109,10 +105,10 @@ void Interleaver(
         axis_data_t outDataWord;
         outDataWord.data = 0;
         outDataWord.last = (w == wordsIn - 1) ? 1 : 0;
-        outDataWord.keep = -1; // All bytes valid
+        outDataWord.keep = -1;
         outDataWord.strb = -1;
         
-        // Assemble the output word
+        // Assemble output word
         ap_uint<96> assembledWord = 0;
         
         for (int b = 0; b < bitsPerWord; b++) {
@@ -120,8 +116,6 @@ void Interleaver(
             int currentBit = w * bitsPerWord + b;
             if (currentBit < E) {
                 assembledWord[b] = outBuffer[currentBit];
-            } else {
-                assembledWord[b] = 0; // Padding bits
             }
         }
         
