@@ -12,7 +12,6 @@ the various pragmas used
 why are we "word" processing - is that the reason why we need bit reversal ?
 In the synthesized hardware - VISUALIZE
 
-
 What I know :
 
 word = 96bits
